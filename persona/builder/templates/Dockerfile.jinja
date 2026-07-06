@@ -1,0 +1,38 @@
+FROM python:{{ python_version }}-slim
+
+# System packages
+{% if system_packages %}
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    {{ system_packages | join(' ') }} \
+    && rm -rf /var/lib/apt/lists/*
+{% endif %}
+
+# Create non-root user
+RUN useradd -m -s /bin/bash persona
+WORKDIR /app
+
+# Install framework (server) dependencies
+COPY server-requirements.txt /tmp/server-requirements.txt
+RUN pip install --no-cache-dir -r /tmp/server-requirements.txt
+
+# Install agent dependencies
+COPY app/{{ requirements_file }} /app/{{ requirements_file }}
+RUN pip install --no-cache-dir -r /app/{{ requirements_file }} 2>/dev/null || true
+
+# Copy agent code
+COPY app/ /app/
+
+# Set environment
+ENV PERSONA_AGENT_DIR=/app
+ENV PERSONA_PORT={{ port }}
+
+# Switch to non-root
+USER persona
+
+# Health check
+HEALTHCHECK --interval=30s --timeout=5s --start-period=10s \
+    CMD python -c "import urllib.request; urllib.request.urlopen('http://localhost:{{ port }}/health')"
+
+EXPOSE {{ port }}
+
+CMD ["python", "-m", "persona.server.main"]

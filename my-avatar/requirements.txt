@@ -1,0 +1,7 @@
+# Add your agent's Python dependencies here
+# These will be installed in the Docker container
+#
+# Examples:
+# requests>=2.28
+# beautifulsoup4>=4.11
+# pandas>=2.0

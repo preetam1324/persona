@@ -1,0 +1,9 @@
+# Files to exclude from Docker build context
+__pycache__/
+*.pyc
+.git/
+.env
+.venv/
+venv/
+*.egg-info/
+.pytest_cache/

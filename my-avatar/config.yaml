@@ -1,0 +1,55 @@
+name: my-avatar
+version: "0.1.0"
+description: "A helpful AI agent"
+
+agent:
+  system_prompt: |
+    You are a helpful assistant. Answer questions clearly and concisely.
+    When asked to perform tasks, use the available tools to help.
+  model:
+    provider: openai
+    name: gpt-4o-mini
+    parameters:
+      temperature: 0.7
+      max_tokens: 2048
+  tools:
+    - name: web_search
+      type: builtin
+    - name: code_executor
+      type: builtin
+
+runtime:
+  concurrency: 4
+  timeout_seconds: 120
+  streaming: true
+  max_turns: 10
+
+resources:
+  cpu: "2"
+  memory: "4Gi"
+
+python_version: "3.11"
+requirements_file: requirements.txt
+secrets:
+  - OPENAI_API_KEY
+
+avatar:
+  enabled: true
+  appearance:
+    type: sprite
+    background: "#1a1a2e"
+    idle_animation: breathing
+  voice:
+    provider: openai
+    voice_id: alloy
+    speed: 1.0
+    language: en-US
+  expressions:
+    idle: neutral
+    thinking: eyebrows_raised
+    speaking: talking
+    error: concerned
+    happy: smile
+  input:
+    microphone: true
+    stt_provider: browser
