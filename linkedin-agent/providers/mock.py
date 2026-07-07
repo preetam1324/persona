@@ -47,11 +47,11 @@ _FAKE_PROFILES = [
     ),
 ]
 
-_SENT_MESSAGES: dict[str, list[str]] = {}
-
-
 class MockLinkedInProvider(LinkedInProvider):
     """Returns fake data for development and testing."""
+
+    def __init__(self) -> None:
+        self._sent_messages: dict[str, list[str]] = {}
 
     async def search_people(
         self, criteria: SearchCriteria
@@ -87,7 +87,7 @@ class MockLinkedInProvider(LinkedInProvider):
     async def send_message(
         self, profile_id: str, message: str
     ) -> MessageResult:
-        _SENT_MESSAGES.setdefault(profile_id, []).append(message)
+        self._sent_messages.setdefault(profile_id, []).append(message)
         return MessageResult(
             success=True, message_id=f"msg-{uuid.uuid4().hex[:8]}"
         )
@@ -97,7 +97,7 @@ class MockLinkedInProvider(LinkedInProvider):
     ) -> list[Conversation]:
         # Simulate one reply from Alice
         now = datetime.utcnow()
-        if "mock-001" in _SENT_MESSAGES:
+        if "mock-001" in self._sent_messages:
             return [
                 Conversation(
                     conversation_id="conv-001",

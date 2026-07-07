@@ -10,11 +10,11 @@ from sqlalchemy import (
     Enum,
     ForeignKey,
     Integer,
+    JSON,
     String,
     Text,
     UniqueConstraint,
 )
-from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from persona.storage.database import Base
@@ -66,7 +66,7 @@ class Campaign(Base):
 
     id: Mapped[str] = mapped_column(String(36), primary_key=True, default=_uuid)
     name: Mapped[str] = mapped_column(String(255))
-    criteria_json: Mapped[dict] = mapped_column(JSONB, default=dict)
+    criteria_json: Mapped[dict] = mapped_column(JSON, default=dict)
     interval_weeks: Mapped[int] = mapped_column(Integer, default=1)
     status: Mapped[CampaignStatus] = mapped_column(
         Enum(CampaignStatus), default=CampaignStatus.active
@@ -90,7 +90,7 @@ class Lead(Base):
     location: Mapped[str] = mapped_column(String(255), default="")
     headline: Mapped[str] = mapped_column(Text, default="")
     profile_url: Mapped[str] = mapped_column(String(500), default="")
-    raw_data_json: Mapped[dict] = mapped_column(JSONB, default=dict)
+    raw_data_json: Mapped[dict] = mapped_column(JSON, default=dict)
     created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
 
     campaign_leads: Mapped[list["CampaignLead"]] = relationship(
