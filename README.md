@@ -2,7 +2,7 @@
 
 **Define AI agents in YAML, deploy anywhere as Docker containers.**
 
-Persona is a free, open-source Python framework inspired by Baseten's Truss. Where Truss packages ML models, Persona packages **agentic AI** — agents that reason, use tools, and answer questions.
+Persona is a free, open-source Python framework. Persona packages **agentic AI** — agents that reason, use tools, and answer questions.
 
 ## Quickstart
 
