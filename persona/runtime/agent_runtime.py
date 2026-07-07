@@ -40,6 +40,30 @@ class AgentRuntime:
         self.memory = memory
         self.max_turns = config.runtime.max_turns
 
+    def swap_provider(
+        self,
+        provider_name: str,
+        model_name: str,
+        parameters: dict[str, Any] | None = None,
+        secrets: dict[str, str] | None = None,
+    ) -> None:
+        """Hot-swap the LLM provider at runtime without restart."""
+        import persona.providers.registry  # noqa: F401
+
+        effective_secrets = secrets or self.agent.secrets
+        effective_params = parameters or {}
+        self.provider = ProviderRegistry.create(
+            provider_name=provider_name,
+            model_name=model_name,
+            parameters=effective_params,
+            secrets=effective_secrets,
+        )
+        # Update config to reflect the swap for /v1/agent/info
+        self.config.agent.model.provider = provider_name
+        self.config.agent.model.name = model_name
+        self.config.agent.model.parameters = effective_params
+        logger.info(f"Swapped provider to {provider_name}/{model_name}")
+
     @classmethod
     def from_config(cls, config: PersonaConfig, secrets: dict[str, str]) -> "AgentRuntime":
         """Create a fully-wired AgentRuntime from a PersonaConfig."""
@@ -62,9 +86,34 @@ class AgentRuntime:
         data_dir = Path("data")
         tools = build_tool_registry(config.agent.tools, data_dir=data_dir)
 
-        # Create agent
-        agent = Agent(config=config, secrets=secrets, data_dir=data_dir)
+        # Create agent — use custom class if specified
+        if config.agent.class_file:
+            import importlib.util
+            import sys
+
+            class_file = Path(config.agent.class_file)
+            if not class_file.exists():
+                raise FileNotFoundError(
+                    f"Agent class_file not found: {class_file}"
+                )
+            spec = importlib.util.spec_from_file_location("custom_agent", class_file)
+            mod = importlib.util.module_from_spec(spec)  # type: ignore[arg-type]
+            sys.modules["custom_agent"] = mod
+            spec.loader.exec_module(mod)  # type: ignore[union-attr]
+            agent_cls = getattr(mod, config.agent.class_name, None)
+            if agent_cls is None:
+                raise ValueError(
+                    f"Class '{config.agent.class_name}' not found in {class_file}"
+                )
+            agent = agent_cls(config=config, secrets=secrets, data_dir=data_dir)
+        else:
+            agent = Agent(config=config, secrets=secrets, data_dir=data_dir)
+
         agent.load()
+
+        # Inject dependencies into tools if the agent supports it
+        if hasattr(agent, "inject_dependencies"):
+            agent.inject_dependencies(tools, provider)
 
         # Create memory
         memory = ConversationMemory()

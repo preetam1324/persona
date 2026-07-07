@@ -1,0 +1,7 @@
+Hi {name},
+
+I noticed you're leading {title} efforts at {company} — that's a space I'm very passionate about.
+
+I've been working on solutions that help teams like yours achieve better results with less effort. Would you be open to a quick 15-minute chat to see if there's a fit?
+
+Best regards

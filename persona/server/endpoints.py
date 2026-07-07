@@ -1,12 +1,13 @@
-"""HTTP endpoints — /v1/chat, /health, /ready, /v1/agent/info."""
+"""HTTP endpoints — /v1/chat, /health, /ready, /v1/agent/info, /v1/agent/model, /v1/agent/downloads."""
 
 from __future__ import annotations
 
 import uuid
+from pathlib import Path
 from typing import Any
 
-from fastapi import APIRouter, Request
-from fastapi.responses import JSONResponse
+from fastapi import APIRouter, HTTPException, Request
+from fastapi.responses import FileResponse, JSONResponse
 from pydantic import BaseModel, Field
 from sse_starlette.sse import EventSourceResponse
 
@@ -97,6 +98,52 @@ def create_router() -> APIRouter:
             )
             if result.usage
             else None,
+        )
+
+    class ModelSwapRequest(BaseModel):
+        provider: str
+        model_name: str
+        parameters: dict[str, Any] = Field(default_factory=dict)
+
+    @router.post("/v1/agent/model")
+    async def swap_model(request: Request, body: ModelSwapRequest) -> dict[str, Any]:
+        """Hot-swap the LLM provider/model at runtime."""
+        runtime = request.app.state.runtime
+        secrets = runtime.agent.secrets
+        runtime.swap_provider(
+            provider_name=body.provider,
+            model_name=body.model_name,
+            parameters=body.parameters,
+            secrets=secrets,
+        )
+        return {
+            "status": "ok",
+            "model": {
+                "provider": body.provider,
+                "name": body.model_name,
+            },
+        }
+
+    @router.get("/v1/agent/downloads/{filename}")
+    async def download_file(request: Request, filename: str) -> FileResponse:
+        """Download an exported file from the agent's data/exports directory."""
+        # Prevent path traversal
+        if ".." in filename or "/" in filename or "\\" in filename:
+            raise HTTPException(status_code=400, detail="Invalid filename")
+
+        exports_dir = Path("data") / "exports"
+        file_path = exports_dir / filename
+        if not file_path.exists():
+            raise HTTPException(status_code=404, detail="File not found")
+
+        media_type = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+        if filename.endswith(".csv"):
+            media_type = "text/csv"
+
+        return FileResponse(
+            path=str(file_path),
+            filename=filename,
+            media_type=media_type,
         )
 
     async def _stream_response(runtime: Any, message: str, session_id: str):

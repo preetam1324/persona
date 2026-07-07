@@ -1,0 +1,5 @@
+Hi {name},
+
+I came across your profile and was impressed by your work as {title} at {company}. I'd love to connect and explore how we might collaborate.
+
+Looking forward to hearing from you!

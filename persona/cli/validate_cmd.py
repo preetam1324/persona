@@ -57,7 +57,7 @@ def validate_cmd(directory: str | None) -> None:
             else:
                 # Check if the module file exists (convert dotted path to file path)
                 module_parts = tool_ref.module.split(".")
-                possible_path = agent_dir / "/".join(module_parts) + ".py"
+                possible_path = agent_dir / ("/".join(module_parts) + ".py")
                 # Also check with __init__.py
                 if possible_path.exists():
                     console.print(f"[green]✓[/green] Custom tool module: {tool_ref.module}")

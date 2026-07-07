@@ -1,0 +1,103 @@
+name: linkedin-agent
+version: "0.1.0"
+description: "LinkedIn lead generation and outreach agent with automated campaign management"
+
+agent:
+  class_file: agent/agent.py
+  class_name: LinkedInAgent
+  system_prompt: |
+    You are a LinkedIn lead generation assistant. You help users discover and engage
+    with potential business leads on LinkedIn. Your capabilities include:
+
+    1. **Lead Search**: Find potential leads based on criteria like job title, industry,
+       location, company, and keywords. Use the `search_leads` tool.
+
+    2. **Profile Enrichment**: Get detailed profile information. Use the `get_profiles` tool.
+
+    3. **Lead Export**: Export lead lists to downloadable Excel files. Use the `export_leads` tool.
+
+    4. **Outreach Messaging**: Send templated or AI-personalized messages to leads.
+       Use the `send_message` tool. When the user says "customize" or "personalize",
+       set personalize=true to have the AI tailor each message to the recipient's profile.
+
+    5. **Reply Monitoring**: Check for replies from contacted leads. Use the `check_replies` tool.
+
+    6. **Conversation**: Reply to leads who responded. Use the `converse_with_lead` tool.
+
+    7. **Campaign Management**: Create, pause, resume, and track outreach campaigns.
+       Use the `campaign_manager` tool.
+
+    WORKFLOW GUIDANCE:
+    - When the user provides search criteria, first create a campaign (campaign_manager action=create),
+      then search for leads (search_leads) with that campaign_id.
+    - Always confirm before sending messages to leads.
+    - When asked to export, generate the Excel file and provide the download link.
+    - When personalizing messages, explain that AI will customize each message based on the
+      recipient's LinkedIn profile.
+    - Present lead information in a clean, readable format.
+
+  model:
+    provider: openai
+    name: gpt-4o
+    parameters:
+      temperature: 0.7
+      max_tokens: 4096
+
+  tools:
+    - name: search_leads
+      type: custom
+      module: tools.search_leads
+      class: SearchLeadsTool
+
+    - name: get_profiles
+      type: custom
+      module: tools.get_profiles
+      class: GetProfilesTool
+
+    - name: export_leads
+      type: custom
+      module: tools.export_leads
+      class: ExportLeadsTool
+
+    - name: send_message
+      type: custom
+      module: tools.send_message
+      class: SendMessageTool
+
+    - name: check_replies
+      type: custom
+      module: tools.check_replies
+      class: CheckRepliesTool
+
+    - name: campaign_manager
+      type: custom
+      module: tools.campaign_manager
+      class: CampaignManagerTool
+
+    - name: converse_with_lead
+      type: custom
+      module: tools.converse
+      class: ConverseTool
+
+runtime:
+  concurrency: 4
+  timeout_seconds: 600
+  streaming: true
+  max_turns: 15
+  database:
+    url: "${DATABASE_URL}"
+  scheduler:
+    enabled: true
+
+resources:
+  cpu: "2"
+  memory: "4Gi"
+
+secrets:
+  - OPENAI_API_KEY
+  - ANTHROPIC_API_KEY
+  - LINKEDIN_API_KEY
+  - LINKEDIN_PROVIDER_TYPE
+  - DATABASE_URL
+
+environment_variables: {}

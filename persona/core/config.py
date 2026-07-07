@@ -64,6 +64,18 @@ class AgentConfig(BaseModel):
     orchestration: OrchestrationConfig = Field(default_factory=OrchestrationConfig)
 
 
+class DatabaseConfig(BaseModel):
+    """Database configuration for persistent storage."""
+
+    url: str = ""  # e.g. "postgresql+asyncpg://user:pass@host/db"
+
+
+class SchedulerConfig(BaseModel):
+    """In-process job scheduler configuration."""
+
+    enabled: bool = False
+
+
 class RuntimeConfig(BaseModel):
     """Runtime / serving configuration."""
 
@@ -71,6 +83,8 @@ class RuntimeConfig(BaseModel):
     timeout_seconds: int = 300
     streaming: bool = True
     max_turns: int = 10  # Max tool-call loops before forcing a response
+    database: DatabaseConfig | None = None
+    scheduler: SchedulerConfig | None = None
 
 
 class ResourceConfig(BaseModel):
